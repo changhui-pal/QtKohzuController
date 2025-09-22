@@ -1,0 +1,3 @@
+[submodule "src/lib/kohzu-controller"]
+	path = src/lib/kohzu-controller
+	url = https://github.com/changhui-pal/kohzu-controller.git
