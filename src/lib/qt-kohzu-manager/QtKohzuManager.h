@@ -43,6 +43,8 @@ private:
     std::shared_ptr<ProtocolHandler> protocolHandler_;
     std::shared_ptr<AxisState> axisState_;
     std::shared_ptr<KohzuController> controller_;
+
+    QTimer* monitoringTimer_ = nullptr; // 모니터링 타이머 포인터
 };
 
 #endif // QTKOHZUMANAGER_H

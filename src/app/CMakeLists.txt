@@ -9,7 +9,7 @@ file(GLOB_RECURSE APP_SRCS
 # Qt Designer UI 파일도 자동으로 찾습니다.
 file(GLOB APP_UIS
     "${CMAKE_CURRENT_SOURCE_DIR}/mainwindow/*.ui"
-    "${CMAKE_CURRENT_SOURCE_DIR}/AxisControlWidget/*.ui"
+    "${CMAKE_CURRENT_SOURCE_DIR}/axiscontrollwidget/*.ui"
 )
 
 target_sources(QtKohzuController PRIVATE ${APP_SRCS} ${APP_UIS})
@@ -18,7 +18,7 @@ target_sources(QtKohzuController PRIVATE ${APP_SRCS} ${APP_UIS})
 target_include_directories(QtKohzuController PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/mainwindow
-    ${CMAKE_CURRENT_SOURCE_DIR}/AxisControlWidget
+    ${CMAKE_CURRENT_SOURCE_DIR}/axiscontrollwidget
 )
 
 # 라이브러리 연결

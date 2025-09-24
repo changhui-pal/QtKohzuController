@@ -33,10 +33,13 @@ private slots:
     void handleRemovalRequest(int axis);
 
 private:
+    void restartMonitoring(); // 모니터링 재시작을 위한 private 함수
+
     Ui::MainWindow *ui;
     QtKohzuManager *manager_;
 
+    // 키는 축 번호(int), 값은 해당 축의 위젯 포인터
     QMap<int, AxisControlWidget*> axisWidgets_;
-    int nextAxisNumber_ = 1;
 };
 #endif // MAINWINDOW_H
+

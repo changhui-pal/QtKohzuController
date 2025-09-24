@@ -16,7 +16,14 @@ AxisControlWidget::~AxisControlWidget()
 
 int AxisControlWidget::getAxisNumber() const
 {
-    return ui->axisSpinBox->value();
+    return currentAxisNumber_;
+}
+
+void AxisControlWidget::setAxisNumber(int axisNumber)
+{
+    currentAxisNumber_ = axisNumber;
+    ui->axisNumberLabel->setText(QString::number(axisNumber));
+    ui->container->setTitle(QString("Axis %1").arg(axisNumber));
 }
 
 void AxisControlWidget::setPosition(int position)
@@ -24,33 +31,21 @@ void AxisControlWidget::setPosition(int position)
     ui->currentPositionLabel->setText(QString::number(position));
 }
 
-void AxisControlWidget::setAxisNumber(int axisNumber)
-{
-    ui->axisSpinBox->setValue(axisNumber);
-}
-
 void AxisControlWidget::on_cwButton_clicked()
 {
-    int axis = ui->axisSpinBox->value();
     int value = ui->valueLineEdit->text().toInt();
     bool isAbsolute = ui->absoluteRadioButton->isChecked();
-    emit moveRequested(axis, value, isAbsolute);
+    emit moveRequested(currentAxisNumber_, value, isAbsolute);
 }
 
 void AxisControlWidget::on_ccwButton_clicked()
 {
-    int axis = ui->axisSpinBox->value();
     int value = ui->valueLineEdit->text().toInt();
     bool isAbsolute = ui->absoluteRadioButton->isChecked();
-    emit moveRequested(axis, -value, isAbsolute);
+    emit moveRequested(currentAxisNumber_, -value, isAbsolute);
 }
 
 void AxisControlWidget::on_removeButton_clicked()
 {
-    emit removalRequested(ui->axisSpinBox->value());
-}
-
-void AxisControlWidget::on_axisSpinBox_valueChanged(int arg1)
-{
-    ui->container->setTitle(QString("Axis %1").arg(arg1));
+    emit removalRequested(currentAxisNumber_);
 }

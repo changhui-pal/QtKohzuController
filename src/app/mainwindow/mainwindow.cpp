@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <vector>
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -34,15 +35,23 @@ void MainWindow::on_connectButton_clicked()
 
 void MainWindow::on_addAxisButton_clicked()
 {
+    int axisToAdd = ui->addAxisSpinBox->value();
+    if (axisWidgets_.contains(axisToAdd)) {
+        QMessageBox::warning(this, "Duplicate Axis",
+                             QString("Axis %1 already exists.").arg(axisToAdd));
+        return;
+    }
+
     AxisControlWidget *axisWidget = new AxisControlWidget(this);
-    axisWidget->setAxisNumber(nextAxisNumber_);
+    axisWidget->setAxisNumber(axisToAdd);
 
     connect(axisWidget, &AxisControlWidget::moveRequested, this, &MainWindow::handleMoveRequest);
     connect(axisWidget, &AxisControlWidget::removalRequested, this, &MainWindow::handleRemovalRequest);
 
     ui->axisLayout->addWidget(axisWidget);
-    axisWidgets_.insert(nextAxisNumber_, axisWidget);
-    nextAxisNumber_++;
+    axisWidgets_.insert(axisToAdd, axisWidget);
+
+    restartMonitoring();
 }
 
 void MainWindow::logMessage(const QString &message)
@@ -57,15 +66,7 @@ void MainWindow::updateConnectionStatus(bool connected)
 
     if (connected) {
         ui->connectButton->setText("Disconnect");
-
-        std::vector<int> axes;
-        for(int axisNum : axisWidgets_.keys()) {
-            axes.push_back(axisNum);
-        }
-        if (!axes.empty()) {
-            manager_->startMonitoring(axes);
-        }
-
+        restartMonitoring();
     } else {
         ui->connectButton->setText("Connect");
         manager_->stopMonitoring();
@@ -89,6 +90,25 @@ void MainWindow::handleRemovalRequest(int axis)
     if (axisWidgets_.contains(axis)) {
         AxisControlWidget *widget = axisWidgets_.take(axis);
         ui->axisLayout->removeWidget(widget);
-        widget->deleteLater();
+        widget->deleteLater(); // Defer deletion
+
+        restartMonitoring();
+    }
+}
+
+void MainWindow::restartMonitoring()
+{
+    // 연결되어 있지 않거나, 애플리케이션 종료 중이면 아무것도 하지 않음
+    if (!manager_ || !ui->controlGroup->isEnabled()) {
+        return;
+    }
+
+    manager_->stopMonitoring();
+
+    // QMap의 key들로부터 모니터링할 축 목록을 가져옴
+    QList<int> axisList = axisWidgets_.keys();
+    if (!axisList.isEmpty()) {
+        std::vector<int> axesToMonitor(axisList.begin(), axisList.end());
+        manager_->startMonitoring(axesToMonitor);
     }
 }

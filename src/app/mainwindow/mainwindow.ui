@@ -76,11 +76,42 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="addAxisButton">
-         <property name="text">
-          <string>Add Axis</string>
-         </property>
-        </widget>
+        <layout class="QHBoxLayout" name="addAxisLayout">
+         <item>
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_3">
+           <property name="text">
+            <string>Axis to Add:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="addAxisSpinBox">
+           <property name="minimum">
+            <number>1</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="addAxisButton">
+           <property name="text">
+            <string>Add Axis</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
       </layout>
      </widget>
