@@ -1,5 +1,6 @@
 #include "AxisControlWidget.h"
 #include "ui_AxisControlWidget.h"
+#include <QString>
 
 AxisControlWidget::AxisControlWidget(QWidget *parent) :
     QWidget(parent),
@@ -7,6 +8,9 @@ AxisControlWidget::AxisControlWidget(QWidget *parent) :
 {
     ui->setupUi(this);
     ui->absoluteRadioButton->setChecked(true);
+    for (int i = 0; i <= 9; ++i) {
+        ui->speedComboBox->addItem(QString::number(i));
+    }
 }
 
 AxisControlWidget::~AxisControlWidget()
@@ -14,38 +18,55 @@ AxisControlWidget::~AxisControlWidget()
     delete ui;
 }
 
-int AxisControlWidget::getAxisNumber() const
-{
-    return currentAxisNumber_;
-}
+// --- Getters ---
+int AxisControlWidget::getAxisNumber() const { return currentAxisNumber_; }
+QString AxisControlWidget::getSelectedMotorName() const { return ui->motorComboBox->currentText(); }
+double AxisControlWidget::getInputValue() const { return ui->valueLineEdit->text().toDouble(); }
+int AxisControlWidget::getSelectedSpeed() const { return ui->speedComboBox->currentText().toInt(); }
+bool AxisControlWidget::isAbsoluteMode() const { return ui->absoluteRadioButton->isChecked(); }
 
+// --- Setters / UI-Setup ---
 void AxisControlWidget::setAxisNumber(int axisNumber)
 {
     currentAxisNumber_ = axisNumber;
-    ui->axisNumberLabel->setText(QString::number(axisNumber));
     ui->container->setTitle(QString("Axis %1").arg(axisNumber));
 }
 
-void AxisControlWidget::setPosition(int position)
+void AxisControlWidget::populateMotorDropdown(const QMap<QString, StageMotorInfo> &motors)
 {
-    ui->currentPositionLabel->setText(QString::number(position));
+    for (const auto& name : motors.keys()) {
+        ui->motorComboBox->addItem(name);
+    }
 }
 
-void AxisControlWidget::on_cwButton_clicked()
+void AxisControlWidget::setTravelRange(double range)
 {
-    int value = ui->valueLineEdit->text().toInt();
-    bool isAbsolute = ui->absoluteRadioButton->isChecked();
-    emit moveRequested(currentAxisNumber_, value, isAbsolute);
+    ui->rangeLabel->setText(QString("(± %1 mm)").arg(range));
 }
 
-void AxisControlWidget::on_ccwButton_clicked()
+void AxisControlWidget::setPosition(double position_mm)
 {
-    int value = ui->valueLineEdit->text().toInt();
-    bool isAbsolute = ui->absoluteRadioButton->isChecked();
-    emit moveRequested(currentAxisNumber_, -value, isAbsolute);
+    ui->currentPositionLabel->setText(QString::number(position_mm, 'f', 4)); // 소수점 4자리까지 표시
 }
 
+// --- Slots ---
 void AxisControlWidget::on_removeButton_clicked()
 {
     emit removalRequested(currentAxisNumber_);
 }
+
+void AxisControlWidget::on_cwButton_clicked()
+{
+    emit moveRequested(currentAxisNumber_);
+}
+
+void AxisControlWidget::on_ccwButton_clicked()
+{
+    emit moveRequested(currentAxisNumber_);
+}
+
+void AxisControlWidget::on_motorComboBox_currentIndexChanged(const QString &motorName)
+{
+    emit motorSelectionChanged(currentAxisNumber_, motorName);
+}
+

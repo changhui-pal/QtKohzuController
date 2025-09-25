@@ -1,6 +1,7 @@
 # QtKohzuManager 라이브러리 생성
 add_library(qt-kohzu-manager STATIC
     QtKohzuManager.cpp
+    StageMotorInfo.h
 )
 
 # 공개 헤더 파일 경로 지정

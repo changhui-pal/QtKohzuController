@@ -72,7 +72,7 @@ void QtKohzuManager::startMonitoring(const std::vector<int>& axes)
 
     stopMonitoring(); // 기존 타이머가 있다면 정리
 
-    controller_->startMonitoring(axes, 200); // 200ms period
+    controller_->startMonitoring(axes, 100); // 100ms period
     emit logMessage("Started monitoring axes.");
 
     monitoringTimer_ = new QTimer(this);
@@ -85,7 +85,7 @@ void QtKohzuManager::startMonitoring(const std::vector<int>& axes)
             }
         }
     });
-    monitoringTimer_->start(200); // UI 업데이트 주기
+    monitoringTimer_->start(100); // UI 업데이트 주기
 }
 
 void QtKohzuManager::stopMonitoring()
@@ -101,23 +101,22 @@ void QtKohzuManager::stopMonitoring()
 }
 
 
-void QtKohzuManager::move(int axis, int value, bool isAbsolute)
+void QtKohzuManager::move(int axis, int pulse_value, int speed, bool isAbsolute)
 {
     if (!controller_) return;
 
-    int speed = 0; // Speed can be configured in the UI later
     auto callback = [this, axis](const ProtocolResponse& response) {
-        QString message = QString("Axis %1 move command finished. Status: %2")
-        .arg(axis)
-            .arg(response.status);
+        QString message = QString("Axis %1 move command finished. Full response: %2")
+                              .arg(axis)
+                              .arg(response.fullResponse);
         emit logMessage(message);
     };
 
     if (isAbsolute) {
-        emit logMessage(QString("Moving axis %1 to absolute position %2...").arg(axis).arg(value));
-        controller_->moveAbsolute(axis, value, speed, 0, callback);
+        emit logMessage(QString("Moving axis %1 to absolute position %2...").arg(axis).arg(pulse_value));
+        controller_->moveAbsolute(axis, pulse_value, speed, 0, callback);
     } else {
-        emit logMessage(QString("Moving axis %1 by relative distance %2...").arg(axis).arg(value));
-        controller_->moveRelative(axis, value, speed, 0, callback);
+        emit logMessage(QString("Moving axis %1 by relative distance %2...").arg(axis).arg(pulse_value));
+        controller_->moveRelative(axis, pulse_value, speed, 0, callback);
     }
 }

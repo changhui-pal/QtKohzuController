@@ -5,6 +5,7 @@
 #include <QMap>
 #include "QtKohzuManager.h"
 #include "AxisControlWidget.h"
+#include "StageMotorInfo.h" // 모터 정보 헤더 포함
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -19,27 +20,27 @@ public:
     ~MainWindow();
 
 private slots:
-    // UI events
     void on_connectButton_clicked();
     void on_addAxisButton_clicked();
 
-    // QtKohzuManager signals
     void logMessage(const QString &message);
     void updateConnectionStatus(bool connected);
-    void updatePosition(int axis, int position);
+    void updatePosition(int axis, int position_pulse);
 
-    // AxisControlWidget signals
-    void handleMoveRequest(int axis, int value, bool isAbsolute);
+    void handleMoveRequest(int axis);
     void handleRemovalRequest(int axis);
+    void handleMotorSelectionChange(int axis, const QString& motorName);
 
 private:
-    void restartMonitoring(); // 모니터링 재시작을 위한 private 함수
+    void restartMonitoring();
+    void setupAxisWidget(AxisControlWidget* widget);
 
     Ui::MainWindow *ui;
     QtKohzuManager *manager_;
 
-    // 키는 축 번호(int), 값은 해당 축의 위젯 포인터
     QMap<int, AxisControlWidget*> axisWidgets_;
+    QMap<QString, StageMotorInfo> motorDefinitions_;
+    QMap<int, int> currentPositions_pulse_; // 각 축의 현재 위치(pulse)를 캐싱
 };
 #endif // MAINWINDOW_H
 

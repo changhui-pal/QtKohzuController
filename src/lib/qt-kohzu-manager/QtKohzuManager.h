@@ -26,7 +26,7 @@ public slots:
     void disconnectFromServer();
     void startMonitoring(const std::vector<int>& axes);
     void stopMonitoring();
-    void move(int axis, int value, bool isAbsolute);
+    void move(int axis, int pulse_value, int speed, bool isAbsolute);
 
 signals:
     void logMessage(const QString &message);
