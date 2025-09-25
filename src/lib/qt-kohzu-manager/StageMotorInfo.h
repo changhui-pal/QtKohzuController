@@ -18,7 +18,7 @@ inline QMap<QString, StageMotorInfo> getMotorDefinitions() {
     // ARIES 컨트롤러는 기본적으로 half step (분해능 400)을 사용합니다.
     // 예시: 2mm pitch 볼 스크류, 1.8도 스텝 모터 -> 1회전(360도) = 200 full steps = 400 half steps
     // 1회전 당 2mm 이동하므로, 400 pulses / 2mm = 200 pulses/mm
-    definitions["Default"] = {"Default", 1.0, 100000.0}; // 펄스 단위를 그대로 사용할 기본 옵션
+    definitions["Default"] = {"Default", 4000.0, 3.0}; // 펄스 단위를 그대로 사용할 기본 옵션
     definitions["KTM0650"] = {"KTM0650", 4000.0, 3.0};   // 예시: 4000 pulses/mm, ±3mm
     definitions["SAM-40"] = {"SAM-40", 2000.0, 3.0};      // 예시: 2000 pulses/mm, ±3mm
 

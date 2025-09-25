@@ -108,7 +108,7 @@ void QtKohzuManager::move(int axis, int pulse_value, int speed, bool isAbsolute)
     auto callback = [this, axis](const ProtocolResponse& response) {
         QString message = QString("Axis %1 move command finished. Full response: %2")
                               .arg(axis)
-                              .arg(response.fullResponse);
+                              .append(response.fullResponse);
         emit logMessage(message);
     };
 

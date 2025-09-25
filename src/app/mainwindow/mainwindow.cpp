@@ -52,10 +52,18 @@ void MainWindow::on_addAxisButton_clicked()
     }
     AxisControlWidget *axisWidget = new AxisControlWidget(this);
     axisWidget->setAxisNumber(axisToAdd);
-    setupAxisWidget(axisWidget);
-    ui->axisLayout->addWidget(axisWidget);
+
+    // =======================================================================
+    // BUG FIX: 위젯을 맵에 먼저 추가한 후, UI 설정을 진행합니다.
+    // =======================================================================
     axisWidgets_.insert(axisToAdd, axisWidget);
-    currentPositions_pulse_[axisToAdd] = 0; // 새 축 위치 초기화
+    currentPositions_pulse_[axisToAdd] = 0; // 새 축 위치 캐시 초기화
+
+    // 이제 위젯이 맵에 존재하므로, setup 함수가 정상적으로 동작합니다.
+    setupAxisWidget(axisWidget);
+
+    ui->axisLayout->addWidget(axisWidget);
+
     restartMonitoring();
 }
 
@@ -104,7 +112,7 @@ void MainWindow::handleMoveRequest(int axis)
 
     // 버튼 방향에 따라 값 보정
     if (sender()->objectName() == "ccwButton") {
-        value_mm = -qAbs(value_mm);
+        value_mm = qAbs(value_mm * -1);
     } else {
         value_mm = qAbs(value_mm);
     }
