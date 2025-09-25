@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include <vector>
 #include <QMessageBox>
+#include <cmath>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -72,17 +73,15 @@ void MainWindow::logMessage(const QString &message)
     ui->logTextEdit->append(message);
 }
 
-void MainWindow::updateConnectionStatus(bool connected)
-{
+void MainWindow::updateConnectionStatus(bool connected) {
     ui->connectionGroup->setEnabled(!connected);
     ui->controlGroup->setEnabled(connected);
-
     if (connected) {
         ui->connectButton->setText("Disconnect");
         restartMonitoring();
     } else {
         ui->connectButton->setText("Connect");
-        manager_->stopMonitoring();
+        if(manager_) manager_->stopMonitoring();
     }
 }
 
@@ -93,12 +92,12 @@ void MainWindow::updatePosition(int axis, int position_pulse)
     if (widget) {
         QString motorName = widget->getSelectedMotorName();
         const StageMotorInfo& motor = motorDefinitions_[motorName];
-        double position_mm = (motor.pulse_per_mm > 0) ? (position_pulse / motor.pulse_per_mm) : 0;
-        widget->setPosition(position_mm);
+        double position_physical = static_cast<double>(position_pulse) * motor.value_per_pulse;
+        widget->setPosition(position_physical);
     }
 }
 
-void MainWindow::handleMoveRequest(int axis)
+void MainWindow::handleMoveRequest(int axis, bool is_ccw)
 {
     AxisControlWidget* widget = axisWidgets_.value(axis, nullptr);
     if (!widget) return;
@@ -106,76 +105,70 @@ void MainWindow::handleMoveRequest(int axis)
     QString motorName = widget->getSelectedMotorName();
     const StageMotorInfo& motor = motorDefinitions_[motorName];
 
-    double value_mm = widget->getInputValue();
+    double value_physical = widget->getInputValue();
+    // BUG FIX: ccw 버튼 클릭 시 입력 값을 음수로 변환
+    if (is_ccw) {
+        value_physical = -value_physical;
+    }
+
     bool isAbsolute = widget->isAbsoluteMode();
     int speed = widget->getSelectedSpeed();
 
-    // 버튼 방향에 따라 값 보정
-    if (sender()->objectName() == "ccwButton") {
-        value_mm = qAbs(value_mm * -1);
-    } else {
-        value_mm = qAbs(value_mm);
-    }
-
-    double target_pos_mm = 0.0;
+    double target_pos_physical = 0.0;
     if (isAbsolute) {
-        target_pos_mm = value_mm;
+        target_pos_physical = value_physical;
     } else { // Relative
         int current_pulse = currentPositions_pulse_.value(axis, 0);
-        double current_pos_mm = (motor.pulse_per_mm > 0) ? (current_pulse / motor.pulse_per_mm) : 0;
-        target_pos_mm = current_pos_mm + value_mm;
+        double current_pos_physical = current_pulse * motor.value_per_pulse;
+        target_pos_physical = current_pos_physical + value_physical;
     }
 
     // 유효성 검사
-    if (qAbs(target_pos_mm) > motor.travel_range_mm) {
+    if (qAbs(target_pos_physical) > motor.travel_range + 1e-9) {
         QMessageBox::critical(this, "Out of Range",
-                              QString("Target position %1 mm is out of range (± %2 mm).")
-                                  .arg(target_pos_mm).arg(motor.travel_range_mm));
+                              QString("Target position %1 %2 is out of range (± %3 %2).")
+                                  .arg(target_pos_physical, 0, 'f', motor.display_precision)
+                                  .arg(motor.unit_symbol)
+                                  .arg(motor.travel_range));
         return;
     }
 
-    // mm를 pulse로 변환
-    int target_pulse = 0;
+    // 물리 단위를 pulse로 변환
+    int move_pulse = 0;
     if (isAbsolute) {
-        target_pulse = std::round(value_mm * motor.pulse_per_mm);
+        // 절대 이동은 목표 위치를 펄스로 변환
+        move_pulse = std::round(target_pos_physical / motor.value_per_pulse);
     } else {
-        target_pulse = std::round(value_mm * motor.pulse_per_mm);
+        // 상대 이동은 이동할 거리만 펄스로 변환
+        move_pulse = std::round(value_physical / motor.value_per_pulse);
     }
 
-    manager_->move(axis, target_pulse, speed, isAbsolute);
+    manager_->move(axis, move_pulse, speed, isAbsolute);
 }
 
 void MainWindow::handleMotorSelectionChange(int axis, const QString &motorName)
 {
     AxisControlWidget* widget = axisWidgets_.value(axis, nullptr);
     if (widget && motorDefinitions_.contains(motorName)) {
-        widget->setTravelRange(motorDefinitions_[motorName].travel_range_mm);
+        const StageMotorInfo& motor = motorDefinitions_[motorName];
+        widget->updateUiForMotor(motor);
         // 현재 위치(pulse)를 새 단위에 맞게 다시 계산하여 표시
         updatePosition(axis, currentPositions_pulse_.value(axis, 0));
     }
 }
 
-void MainWindow::handleRemovalRequest(int axis)
-{
+void MainWindow::handleRemovalRequest(int axis) {
     if (axisWidgets_.contains(axis)) {
         AxisControlWidget *widget = axisWidgets_.take(axis);
-        ui->axisLayout->removeWidget(widget);
-        widget->deleteLater(); // Defer deletion
-
+        currentPositions_pulse_.remove(axis);
+        widget->deleteLater();
         restartMonitoring();
     }
 }
 
-void MainWindow::restartMonitoring()
-{
-    // 연결되어 있지 않거나, 애플리케이션 종료 중이면 아무것도 하지 않음
-    if (!manager_ || !ui->controlGroup->isEnabled()) {
-        return;
-    }
-
+void MainWindow::restartMonitoring() {
+    if (!manager_ || !ui->controlGroup->isEnabled()) return;
     manager_->stopMonitoring();
-
-    // QMap의 key들로부터 모니터링할 축 목록을 가져옴
     QList<int> axisList = axisWidgets_.keys();
     if (!axisList.isEmpty()) {
         std::vector<int> axesToMonitor(axisList.begin(), axisList.end());

@@ -2,7 +2,7 @@
 #define AXISCONTROLWIDGET_H
 
 #include <QWidget>
-#include "StageMotorInfo.h" // 모터 정보 구조체 헤더
+#include "StageMotorInfo.h"
 
 namespace Ui {
 class AxisControlWidget;
@@ -16,21 +16,21 @@ public:
     explicit AxisControlWidget(QWidget *parent = nullptr);
     ~AxisControlWidget();
 
-    // Getter 함수들
+    // Getters
     int getAxisNumber() const;
     QString getSelectedMotorName() const;
     double getInputValue() const;
     int getSelectedSpeed() const;
     bool isAbsoluteMode() const;
 
-    // Setter 및 설정 함수들
+    // UI Update & Setup
     void setAxisNumber(int axisNumber);
     void populateMotorDropdown(const QMap<QString, StageMotorInfo>& motors);
-    void setTravelRange(double range);
-    void setPosition(double position_mm);
+    void setPosition(double physical_position);
+    void updateUiForMotor(const StageMotorInfo& motor);
 
 signals:
-    void moveRequested(int axis); // 이동 버튼 클릭 시 축 번호만 알림
+    void moveRequested(int axis, bool is_ccw); // cw/ccw 여부를 bool로 전달
     void removalRequested(int axis);
     void motorSelectionChanged(int axis, const QString& motorName);
 
@@ -43,6 +43,7 @@ private slots:
 private:
     Ui::AxisControlWidget *ui;
     int currentAxisNumber_ = 0;
+    int displayPrecision_ = 4; // 현재 모터의 표시 정밀도
 };
 
 #endif // AXISCONTROLWIDGET_H

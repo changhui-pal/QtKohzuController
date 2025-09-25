@@ -25,7 +25,7 @@ double AxisControlWidget::getInputValue() const { return ui->valueLineEdit->text
 int AxisControlWidget::getSelectedSpeed() const { return ui->speedComboBox->currentText().toInt(); }
 bool AxisControlWidget::isAbsoluteMode() const { return ui->absoluteRadioButton->isChecked(); }
 
-// --- Setters / UI-Setup ---
+// --- UI Update & Setup ---
 void AxisControlWidget::setAxisNumber(int axisNumber)
 {
     currentAxisNumber_ = axisNumber;
@@ -34,39 +34,29 @@ void AxisControlWidget::setAxisNumber(int axisNumber)
 
 void AxisControlWidget::populateMotorDropdown(const QMap<QString, StageMotorInfo> &motors)
 {
-    for (const auto& name : motors.keys()) {
-        ui->motorComboBox->addItem(name);
-    }
+    ui->motorComboBox->addItems(motors.keys());
 }
 
-void AxisControlWidget::setTravelRange(double range)
+void AxisControlWidget::setPosition(double physical_position)
 {
-    ui->rangeLabel->setText(QString("(± %1 mm)").arg(range));
+    ui->currentPositionLabel->setText(QString::number(physical_position, 'f', displayPrecision_));
 }
 
-void AxisControlWidget::setPosition(double position_mm)
+void AxisControlWidget::updateUiForMotor(const StageMotorInfo &motor)
 {
-    ui->currentPositionLabel->setText(QString::number(position_mm, 'f', 4)); // 소수점 4자리까지 표시
+    displayPrecision_ = motor.display_precision;
+    const QString& unit = motor.unit_symbol;
+
+    ui->positionUnitLabel->setText(QString("Pos (%1):").arg(unit));
+    ui->valueLineEdit->setPlaceholderText(unit);
+    ui->rangeLabel->setText(QString("(± %1 %2)").arg(motor.travel_range).arg(unit));
 }
 
 // --- Slots ---
-void AxisControlWidget::on_removeButton_clicked()
-{
-    emit removalRequested(currentAxisNumber_);
-}
-
-void AxisControlWidget::on_cwButton_clicked()
-{
-    emit moveRequested(currentAxisNumber_);
-}
-
-void AxisControlWidget::on_ccwButton_clicked()
-{
-    emit moveRequested(currentAxisNumber_);
-}
-
+void AxisControlWidget::on_removeButton_clicked() { emit removalRequested(currentAxisNumber_); }
+void AxisControlWidget::on_cwButton_clicked() { emit moveRequested(currentAxisNumber_, false); } // is_ccw = false
+void AxisControlWidget::on_ccwButton_clicked() { emit moveRequested(currentAxisNumber_, true); }  // is_ccw = true
 void AxisControlWidget::on_motorComboBox_currentIndexChanged(const QString &motorName)
 {
     emit motorSelectionChanged(currentAxisNumber_, motorName);
 }
-

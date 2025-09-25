@@ -2,6 +2,17 @@
 <ui version="4.0">
  <class>AxisControlWidget</class>
  <widget class="QWidget" name="AxisControlWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>852</width>
+    <height>81</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
   <layout class="QHBoxLayout" name="horizontalLayout" stretch="1">
    <item>
     <widget class="QGroupBox" name="container">
@@ -36,9 +47,9 @@
        </spacer>
       </item>
       <item>
-       <widget class="QLabel" name="label_2">
+       <widget class="QLabel" name="positionUnitLabel">
         <property name="text">
-         <string>Pos (mm):</string>
+         <string>Pos (...):</string>
         </property>
        </widget>
       </item>
@@ -46,7 +57,7 @@
        <widget class="QLabel" name="currentPositionLabel">
         <property name="minimumSize">
          <size>
-          <width>80</width>
+          <width>100</width>
           <height>0</height>
          </size>
         </property>
@@ -91,14 +102,14 @@
       <item>
        <widget class="QLineEdit" name="valueLineEdit">
         <property name="placeholderText">
-         <string>mm</string>
+         <string>...</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QLabel" name="rangeLabel">
         <property name="text">
-         <string>(± 0 mm)</string>
+         <string>(± 0 ...)</string>
         </property>
        </widget>
       </item>
@@ -141,3 +152,4 @@
  <resources/>
  <connections/>
 </ui>
+

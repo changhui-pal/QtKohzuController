@@ -4,25 +4,46 @@
 #include <QString>
 #include <QMap>
 
+// 모터의 단위를 구분하기 위한 열거형
+enum class UnitType {
+    Linear,  // 선형 이동 (mm)
+    Angular  // 각도 이동 (°)
+};
+
 // 각 스테이지 모터의 물리적 특성을 정의하는 구조체
 struct StageMotorInfo {
     QString name;
-    double pulse_per_mm; // 1mm를 이동하는 데 필요한 펄스 수
-    double travel_range_mm; // 이동 가능한 최대 범위 (± 값)
+    UnitType unit_type;
+    QString unit_symbol;      // UI에 표시될 단위 심볼 ("mm" or "°")
+    double value_per_pulse;   // 1 half-step 펄스 당 이동하는 값 (mm 또는 °)
+    double travel_range;      // 이동 가능한 최대 범위 (± 값)
+    int display_precision;    // UI에 표시할 소수점 자릿수
 };
 
 // 애플리케이션 전체에서 사용할 모터 모델 목록을 정의하고 제공하는 함수
+// 실제 Kohzu 장비의 카탈로그 스펙을 기반으로 작성되었습니다.
 inline QMap<QString, StageMotorInfo> getMotorDefinitions() {
     QMap<QString, StageMotorInfo> definitions;
 
-    // ARIES 컨트롤러는 기본적으로 half step (분해능 400)을 사용합니다.
-    // 예시: 2mm pitch 볼 스크류, 1.8도 스텝 모터 -> 1회전(360도) = 200 full steps = 400 half steps
-    // 1회전 당 2mm 이동하므로, 400 pulses / 2mm = 200 pulses/mm
-    definitions["Default"] = {"Default", 4000.0, 3.0}; // 펄스 단위를 그대로 사용할 기본 옵션
-    definitions["KTM0650"] = {"KTM0650", 4000.0, 3.0};   // 예시: 4000 pulses/mm, ±3mm
-    definitions["SAM-40"] = {"SAM-40", 2000.0, 3.0};      // 예시: 2000 pulses/mm, ±3mm
+    definitions["Default"] = {"Default", UnitType::Linear, "pulse", 1.0, 1000000.0, 0};
+
+    // Rotation Stage (각도)
+    definitions["RA04A-W"] = {"RA04A-W", UnitType::Angular, "°", 0.0001, 180.0, 4};
+
+    // Z-axis Linear Stage (선형)
+    definitions["ZA05A-W1"] = {"ZA05A-W1", UnitType::Linear, "mm", 0.0005, 5.0, 4}; // 0.5µm/pulse
+
+    // Swing Arc Stage (각도)
+    definitions["SA05A-R2B"] = {"SA05A-R2B", UnitType::Angular, "°", 0.0005, 5.0, 4};
+
+    // X-axis Linear Stage (선형)
+    definitions["XA05A-R201"] = {"XA05A-R201", UnitType::Linear, "mm", 0.0005, 5.0, 4}; // 0.5µm/pulse
+
+    // Z-axis Linear Stage (선형)
+    definitions["ZA10A-32F01"] = {"ZA10A-32F01", UnitType::Linear, "mm", 0.001, 10.0, 3}; // 1.0µm/pulse
 
     return definitions;
 }
 
 #endif // STAGEMOTORINFO_H
+
