@@ -131,6 +131,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="originButton">
+        <property name="text">
+         <string>Origin</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="cwButton">
         <property name="text">
          <string>▶</string>
@@ -152,4 +159,3 @@
  <resources/>
  <connections/>
 </ui>
-

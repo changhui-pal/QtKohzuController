@@ -18,14 +18,12 @@ AxisControlWidget::~AxisControlWidget()
     delete ui;
 }
 
-// --- Getters ---
 int AxisControlWidget::getAxisNumber() const { return currentAxisNumber_; }
 QString AxisControlWidget::getSelectedMotorName() const { return ui->motorComboBox->currentText(); }
 double AxisControlWidget::getInputValue() const { return ui->valueLineEdit->text().toDouble(); }
 int AxisControlWidget::getSelectedSpeed() const { return ui->speedComboBox->currentText().toInt(); }
 bool AxisControlWidget::isAbsoluteMode() const { return ui->absoluteRadioButton->isChecked(); }
 
-// --- UI Update & Setup ---
 void AxisControlWidget::setAxisNumber(int axisNumber)
 {
     currentAxisNumber_ = axisNumber;
@@ -34,7 +32,11 @@ void AxisControlWidget::setAxisNumber(int axisNumber)
 
 void AxisControlWidget::populateMotorDropdown(const QMap<QString, StageMotorInfo> &motors)
 {
+    motorDefinitions_ = motors;
     ui->motorComboBox->addItems(motors.keys());
+    if(motorDefinitions_.contains("Default")){
+        updateUiForMotor(motorDefinitions_["Default"]);
+    }
 }
 
 void AxisControlWidget::setPosition(double physical_position)
@@ -46,17 +48,22 @@ void AxisControlWidget::updateUiForMotor(const StageMotorInfo &motor)
 {
     displayPrecision_ = motor.display_precision;
     const QString& unit = motor.unit_symbol;
-
     ui->positionUnitLabel->setText(QString("Pos (%1):").arg(unit));
     ui->valueLineEdit->setPlaceholderText(unit);
     ui->rangeLabel->setText(QString("(± %1 %2)").arg(motor.travel_range).arg(unit));
 }
 
-// --- Slots ---
 void AxisControlWidget::on_removeButton_clicked() { emit removalRequested(currentAxisNumber_); }
-void AxisControlWidget::on_cwButton_clicked() { emit moveRequested(currentAxisNumber_, false); } // is_ccw = false
-void AxisControlWidget::on_ccwButton_clicked() { emit moveRequested(currentAxisNumber_, true); }  // is_ccw = true
-void AxisControlWidget::on_motorComboBox_currentIndexChanged(const QString &motorName)
+void AxisControlWidget::on_cwButton_clicked() { emit moveRequested(currentAxisNumber_, false); }
+void AxisControlWidget::on_ccwButton_clicked() { emit moveRequested(currentAxisNumber_, true); }
+void AxisControlWidget::on_originButton_clicked() { emit originRequested(currentAxisNumber_); }
+
+void AxisControlWidget::on_motorComboBox_currentIndexChanged(int index)
 {
-    emit motorSelectionChanged(currentAxisNumber_, motorName);
+    QString motorName = ui->motorComboBox->itemText(index);
+    if (motorDefinitions_.contains(motorName)) {
+        updateUiForMotor(motorDefinitions_[motorName]);
+        emit motorSelectionChanged(currentAxisNumber_, motorName);
+    }
 }
+

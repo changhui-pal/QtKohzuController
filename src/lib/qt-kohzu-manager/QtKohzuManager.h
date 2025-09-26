@@ -4,15 +4,14 @@
 #include <QObject>
 #include <memory>
 #include <thread>
-#include <string>
 #include <vector>
-#include <QTimer>
+#include <boost/asio.hpp>
 
-#include "controller/KohzuController.h"
-#include "controller/AxisState.h"
-#include "core/TcpClient.h"
-#include "protocol/ProtocolHandler.h"
-#include <boost/asio/io_context.hpp>
+// Forward declarations
+class KohzuController;
+class ICommunicationClient;
+class ProtocolHandler;
+class AxisState;
 
 class QtKohzuManager : public QObject
 {
@@ -22,29 +21,32 @@ public:
     ~QtKohzuManager();
 
 public slots:
-    void connectToServer(const QString &ip, const QString &port);
-    void disconnectFromServer();
+    void connectToController(const QString& host, quint16 port);
+    void disconnectFromController();
+    void move(int axis_no, int pulse, int speed, bool is_absolute);
+    void moveOrigin(int axis_no, int speed);
     void startMonitoring(const std::vector<int>& axes);
     void stopMonitoring();
-    void move(int axis, int pulse_value, int speed, bool isAbsolute);
 
 signals:
-    void logMessage(const QString &message);
     void connectionStatusChanged(bool connected);
-    void positionUpdated(int axis, int position);
+    void logMessage(const QString& message);
+    void positionUpdated(int axis, int position_pulse);
 
 private:
-    void closeConnection();
+    void onControllerResponse(int axis_no, bool is_origin_command, const std::string& full_response, char status);
+    void cleanup();
 
-    std::shared_ptr<boost::asio::io_context> io_context_;
-    std::thread io_thread_;
+    std::unique_ptr<boost::asio::io_context> io_context_;
+    std::unique_ptr<std::thread> io_thread_;
 
     std::shared_ptr<ICommunicationClient> client_;
-    std::shared_ptr<ProtocolHandler> protocolHandler_;
-    std::shared_ptr<AxisState> axisState_;
-    std::shared_ptr<KohzuController> controller_;
+    std::shared_ptr<ProtocolHandler> protocol_handler_;
+    std::shared_ptr<AxisState> axis_state_;
+    std::shared_ptr<KohzuController> kohzu_controller_;
 
-    QTimer* monitoringTimer_ = nullptr; // 모니터링 타이머 포인터
+    QTimer* monitor_timer_;
 };
 
 #endif // QTKOHZUMANAGER_H
+

@@ -28,6 +28,7 @@ private slots:
     void updatePosition(int axis, int position_pulse);
 
     void handleMoveRequest(int axis, bool is_ccw);
+    void handleOriginRequest(int axis);
     void handleRemovalRequest(int axis);
     void handleMotorSelectionChange(int axis, const QString& motorName);
 

@@ -28,19 +28,17 @@ void MainWindow::setupAxisWidget(AxisControlWidget* widget)
 {
     widget->populateMotorDropdown(motorDefinitions_);
     connect(widget, &AxisControlWidget::moveRequested, this, &MainWindow::handleMoveRequest);
+    connect(widget, &AxisControlWidget::originRequested, this, &MainWindow::handleOriginRequest);
     connect(widget, &AxisControlWidget::removalRequested, this, &MainWindow::handleRemovalRequest);
     connect(widget, &AxisControlWidget::motorSelectionChanged, this, &MainWindow::handleMotorSelectionChange);
-
-    // 초기 모터 선택에 대한 UI 업데이트 강제 실행
-    handleMotorSelectionChange(widget->getAxisNumber(), widget->getSelectedMotorName());
 }
 
 void MainWindow::on_connectButton_clicked()
 {
     if (ui->connectButton->text() == "Connect") {
-        manager_->connectToServer(ui->ipAddressEdit->text(), ui->portEdit->text());
+        manager_->connectToController(ui->ipAddressEdit->text(), ui->portEdit->text().toUShort());
     } else {
-        manager_->disconnectFromServer();
+        manager_->disconnectFromController();
     }
 }
 
@@ -92,6 +90,7 @@ void MainWindow::updatePosition(int axis, int position_pulse)
     if (widget) {
         QString motorName = widget->getSelectedMotorName();
         const StageMotorInfo& motor = motorDefinitions_[motorName];
+        // 정밀도 손실 없이 double 타입으로 물리적 위치를 계산합니다.
         double position_physical = static_cast<double>(position_pulse) * motor.value_per_pulse;
         widget->setPosition(position_physical);
     }
@@ -106,9 +105,10 @@ void MainWindow::handleMoveRequest(int axis, bool is_ccw)
     const StageMotorInfo& motor = motorDefinitions_[motorName];
 
     double value_physical = widget->getInputValue();
-    // BUG FIX: ccw 버튼 클릭 시 입력 값을 음수로 변환
     if (is_ccw) {
-        value_physical = -value_physical;
+        value_physical = -qAbs(value_physical);
+    } else {
+        value_physical = qAbs(value_physical);
     }
 
     bool isAbsolute = widget->isAbsoluteMode();
@@ -117,13 +117,12 @@ void MainWindow::handleMoveRequest(int axis, bool is_ccw)
     double target_pos_physical = 0.0;
     if (isAbsolute) {
         target_pos_physical = value_physical;
-    } else { // Relative
+    } else {
         int current_pulse = currentPositions_pulse_.value(axis, 0);
-        double current_pos_physical = current_pulse * motor.value_per_pulse;
+        double current_pos_physical = static_cast<double>(current_pulse) * motor.value_per_pulse;
         target_pos_physical = current_pos_physical + value_physical;
     }
 
-    // 유효성 검사
     if (qAbs(target_pos_physical) > motor.travel_range + 1e-9) {
         QMessageBox::critical(this, "Out of Range",
                               QString("Target position %1 %2 is out of range (± %3 %2).")
@@ -133,28 +132,38 @@ void MainWindow::handleMoveRequest(int axis, bool is_ccw)
         return;
     }
 
-    // 물리 단위를 pulse로 변환
     int move_pulse = 0;
+    if (motor.value_per_pulse == 0) return; // 0으로 나누기 방지
+
     if (isAbsolute) {
-        // 절대 이동은 목표 위치를 펄스로 변환
         move_pulse = std::round(target_pos_physical / motor.value_per_pulse);
     } else {
-        // 상대 이동은 이동할 거리만 펄스로 변환
         move_pulse = std::round(value_physical / motor.value_per_pulse);
     }
 
     manager_->move(axis, move_pulse, speed, isAbsolute);
 }
 
-void MainWindow::handleMotorSelectionChange(int axis, const QString &motorName)
+void MainWindow::handleOriginRequest(int axis)
 {
     AxisControlWidget* widget = axisWidgets_.value(axis, nullptr);
-    if (widget && motorDefinitions_.contains(motorName)) {
-        const StageMotorInfo& motor = motorDefinitions_[motorName];
-        widget->updateUiForMotor(motor);
-        // 현재 위치(pulse)를 새 단위에 맞게 다시 계산하여 표시
-        updatePosition(axis, currentPositions_pulse_.value(axis, 0));
+    if (!widget) return;
+
+    int speed = widget->getSelectedSpeed();
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::question(this, "Confirm Origin Return",
+                                  QString("Are you sure you want to perform an origin return for Axis %1?").arg(axis),
+                                  QMessageBox::Yes|QMessageBox::No);
+    if (reply == QMessageBox::Yes) {
+        manager_->moveOrigin(axis, speed);
     }
+}
+
+void MainWindow::handleMotorSelectionChange(int axis, const QString &motorName)
+{
+    // 위젯이 자신의 UI를 업데이트 한 후, MainWindow는 데이터만 갱신합니다.
+    // 현재 위치를 새로운 단위에 맞게 다시 계산하여 표시하도록 합니다.
+    updatePosition(axis, currentPositions_pulse_.value(axis, 0));
 }
 
 void MainWindow::handleRemovalRequest(int axis) {
