@@ -28,19 +28,19 @@ inline QMap<QString, StageMotorInfo> getMotorDefinitions() {
     definitions["Default"] = {"Default", UnitType::Linear, "pulse", 1.0, 1000000.0, 0};
 
     // Rotation Stage (각도)
-    definitions["RA04A-W"] = {"RA04A-W", UnitType::Angular, "°", 0.0001, 180.0, 4};
+    definitions["RA04A-W"] = {"RA04A-W", UnitType::Angular, "°", 0.002, 177.0, 4};
 
     // Z-axis Linear Stage (선형)
-    definitions["ZA05A-W1"] = {"ZA05A-W1", UnitType::Linear, "mm", 0.0005, 5.0, 4}; // 0.5µm/pulse
+    definitions["ZA05A-W1"] = {"ZA05A-W1", UnitType::Linear, "mm", 0.00025, 4.0, 5}; // 0.25µm/pulse
 
     // Swing Arc Stage (각도)
-    definitions["SA05A-R2B"] = {"SA05A-R2B", UnitType::Angular, "°", 0.0005, 5.0, 4};
+    definitions["SA05A-R2B"] = {"SA05A-R2B", UnitType::Angular, "°", 0.000637, 3.5, 6};
 
     // X-axis Linear Stage (선형)
-    definitions["XA05A-R201"] = {"XA05A-R201", UnitType::Linear, "mm", 0.0005, 5.0, 4}; // 0.5µm/pulse
+    definitions["XA05A-R201"] = {"XA05A-R201", UnitType::Linear, "mm", 0.0005, 7.5, 4}; // 0.5µm/pulse
 
     // Z-axis Linear Stage (선형)
-    definitions["ZA10A-32F01"] = {"ZA10A-32F01", UnitType::Linear, "mm", 0.001, 10.0, 3}; // 1.0µm/pulse
+    definitions["ZA10A-32F01"] = {"ZA10A-32F01", UnitType::Linear, "mm", 0.00005, 15.0, 5}; // 1.0µm/pulse
 
     return definitions;
 }

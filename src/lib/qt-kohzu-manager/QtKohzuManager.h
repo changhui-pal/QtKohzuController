@@ -6,6 +6,7 @@
 #include <thread>
 #include <vector>
 #include <boost/asio.hpp>
+#include <Qtimer>
 
 // Forward declarations
 class KohzuController;

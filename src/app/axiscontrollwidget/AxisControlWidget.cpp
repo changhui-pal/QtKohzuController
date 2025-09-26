@@ -50,7 +50,7 @@ void AxisControlWidget::updateUiForMotor(const StageMotorInfo &motor)
     const QString& unit = motor.unit_symbol;
     ui->positionUnitLabel->setText(QString("Pos (%1):").arg(unit));
     ui->valueLineEdit->setPlaceholderText(unit);
-    ui->rangeLabel->setText(QString("(± %1 %2)").arg(motor.travel_range).arg(unit));
+    ui->rangeLabel->setText(QString("(0~%1 %2)").arg(motor.travel_range * 2).arg(unit));
 }
 
 void AxisControlWidget::on_removeButton_clicked() { emit removalRequested(currentAxisNumber_); }

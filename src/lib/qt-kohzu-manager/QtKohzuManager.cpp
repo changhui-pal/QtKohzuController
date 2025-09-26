@@ -4,7 +4,6 @@
 #include "protocol/ProtocolHandler.h"
 #include "controller/AxisState.h"
 #include "spdlog/spdlog.h"
-#include <QTimer>
 
 QtKohzuManager::QtKohzuManager(QObject *parent) : QObject(parent)
 {

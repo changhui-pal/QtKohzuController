@@ -109,12 +109,6 @@ void MainWindow::handleMoveRequest(int axis, bool is_ccw)
     const StageMotorInfo& motor = motorDefinitions_[motorName];
 
     double value_physical = widget->getInputValue();
-    if (is_ccw) {
-        value_physical = -qAbs(value_physical);
-    } else {
-        value_physical = qAbs(value_physical);
-    }
-
     bool isAbsolute = widget->isAbsoluteMode();
     int speed = widget->getSelectedSpeed();
 
@@ -124,15 +118,17 @@ void MainWindow::handleMoveRequest(int axis, bool is_ccw)
     } else {
         int current_pulse = currentPositions_pulse_.value(axis, 0);
         double current_pos_physical = static_cast<double>(current_pulse) * motor.value_per_pulse;
+        if(is_ccw)
+            value_physical = -qAbs(value_physical);
         target_pos_physical = current_pos_physical + value_physical;
     }
 
-    if (qAbs(target_pos_physical) > motor.travel_range + 1e-9) {
+    if ((target_pos_physical < 0) || (target_pos_physical > (motor.travel_range * 2) + 1e-9)) {
         QMessageBox::critical(this, "Out of Range",
-                              QString("Target position %1 %2 is out of range (± %3 %2).")
+                              QString("Target position %1 %2 is out of range (0~%3 %2).")
                                   .arg(target_pos_physical, 0, 'f', motor.display_precision)
                                   .arg(motor.unit_symbol)
-                                  .arg(motor.travel_range));
+                                  .arg(motor.travel_range * 2));
         return;
     }
 
