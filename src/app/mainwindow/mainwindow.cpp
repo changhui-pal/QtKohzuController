@@ -65,9 +65,8 @@ void MainWindow::on_addAxisButton_clicked()
 
     restartMonitoring();
 
-    // 위젯이 최초로 생성되면 원점 복귀 8번(ccw limit을 원점) 설정 후 원점으로 이동
+    // 위젯이 최초로 생성되면 원점 복귀 8번(ccw limit을 원점) 설정
     manager_->setSystem(axisToAdd, 2, 8);
-    manager_->moveOrigin(axisToAdd, 2);
 }
 
 void MainWindow::logMessage(const QString &message)

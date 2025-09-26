@@ -31,7 +31,7 @@ inline QMap<QString, StageMotorInfo> getMotorDefinitions() {
     definitions["RA04A-W"] = {"RA04A-W", UnitType::Angular, "°", 0.002, 177.0, 4};
 
     // Z-axis Linear Stage (선형)
-    definitions["ZA05A-W1"] = {"ZA05A-W1", UnitType::Linear, "mm", 0.00025, 4.0, 5}; // 0.25µm/pulse
+    definitions["ZA05A-W1"] = {"ZA05A-W1", UnitType::Linear, "mm", 0.00025, 3.3, 5}; // 0.25µm/pulse
 
     // Swing Arc Stage (각도)
     definitions["SA05A-R2B"] = {"SA05A-R2B", UnitType::Angular, "°", 0.000637, 3.5, 6};
