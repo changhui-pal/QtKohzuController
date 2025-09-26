@@ -22,6 +22,17 @@ QtKohzuManager::~QtKohzuManager()
     cleanup();
 }
 
+void QtKohzuManager::setSystem(int axisNo, int systemNo, int value)
+{
+    if (!kohzu_controller_) return;
+
+    auto callback = [this, axisNo](const ProtocolResponse& resp) {
+        emit logMessage(QString("type, axis No, system No : ").append(resp.fullResponse));
+    };
+
+    kohzu_controller_->setSystem(axisNo, systemNo, value, callback);
+}
+
 void QtKohzuManager::connectToController(const QString &host, quint16 port)
 {
     try {

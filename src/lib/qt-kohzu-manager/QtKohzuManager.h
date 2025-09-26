@@ -20,6 +20,8 @@ public:
     explicit QtKohzuManager(QObject *parent = nullptr);
     ~QtKohzuManager();
 
+    void setSystem(int axisNo, int systemNo, int value);
+
 public slots:
     void connectToController(const QString& host, quint16 port);
     void disconnectFromController();
