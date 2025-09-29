@@ -26,7 +26,7 @@ void QtKohzuManager::setSystem(int axisNo, int systemNo, int value)
     if (!kohzu_controller_) return;
 
     auto callback = [this, axisNo](const ProtocolResponse& resp) {
-        emit logMessage(QString("type, axis No, system No : ").append(resp.fullResponse));
+        emit logMessage(QString("type   command[axis_no]    system_no : ").append(resp.fullResponse));
     };
 
     kohzu_controller_->setSystem(axisNo, systemNo, value, callback);
@@ -74,6 +74,7 @@ void QtKohzuManager::move(int axis_no, int pulse, int speed, bool is_absolute)
     if (!kohzu_controller_) return;
 
     auto callback = [this, axis_no](const ProtocolResponse& resp) {
+        qDebug("active callback");
         QMetaObject::invokeMethod(this, "onControllerResponse", Qt::QueuedConnection,
                                   Q_ARG(int, axis_no),
                                   Q_ARG(bool, false), // Not an origin command
@@ -138,6 +139,7 @@ void QtKohzuManager::stopMonitoring()
 
 void QtKohzuManager::onControllerResponse(int axis_no, bool is_origin_command, const std::string& full_response, char status)
 {
+    qDebug("active onControllerResponse");
     QString message = QString("Axis %1 %2 command %3. Response: %4")
     .arg(axis_no)
         .arg(is_origin_command ? "Origin" : "Move")

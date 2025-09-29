@@ -28,7 +28,7 @@ inline QMap<QString, StageMotorInfo> getMotorDefinitions() {
     definitions["Default"] = {"Default", UnitType::Linear, "pulse", 1.0, 1000000.0, 0};
 
     // Rotation Stage (각도)
-    definitions["RA04A-W"] = {"RA04A-W", UnitType::Angular, "°", 0.002, 177.0, 4};
+    definitions["RA04A-W"] = {"RA04A-W", UnitType::Angular, "°", 0.002, 177.0, 3};
 
     // Z-axis Linear Stage (선형)
     definitions["ZA05A-W1"] = {"ZA05A-W1", UnitType::Linear, "mm", 0.00025, 3.3, 5}; // 0.25µm/pulse

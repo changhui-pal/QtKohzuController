@@ -21,8 +21,6 @@ public:
     explicit QtKohzuManager(QObject *parent = nullptr);
     ~QtKohzuManager();
 
-    void setSystem(int axisNo, int systemNo, int value);
-
 public slots:
     void connectToController(const QString& host, quint16 port);
     void disconnectFromController();
@@ -30,14 +28,17 @@ public slots:
     void moveOrigin(int axis_no, int speed);
     void startMonitoring(const std::vector<int>& axes);
     void stopMonitoring();
+    void setSystem(int axisNo, int systemNo, int value);
 
 signals:
     void connectionStatusChanged(bool connected);
     void logMessage(const QString& message);
     void positionUpdated(int axis, int position_pulse);
 
-private:
+private slots:
     void onControllerResponse(int axis_no, bool is_origin_command, const std::string& full_response, char status);
+
+private:
     void cleanup();
 
     std::unique_ptr<boost::asio::io_context> io_context_;

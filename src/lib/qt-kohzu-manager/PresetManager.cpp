@@ -10,7 +10,7 @@ PresetManager::PresetManager(QObject *parent) : QObject(parent) {}
 
 QString PresetManager::getPresetsDirectory() {
     QString path = "";
-    path += "/resources/presets";
+    path += "resources/presets";
     QDir dir(path);
     if (!dir.exists()) {
         dir.mkpath(".");
