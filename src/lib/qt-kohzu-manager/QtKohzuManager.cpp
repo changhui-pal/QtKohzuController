@@ -45,8 +45,8 @@ void QtKohzuManager::move(int axis_no, int pulse, int speed, bool is_absolute)
     if (!kohzu_controller_) return;
 
     auto callback = [this, axis_no](const ProtocolResponse& resp) {
-        // 이동 완료 후 모니터링을 중지합니다.
-        this->stopMonitoring();
+        // 이동 완료 후 200ms 지연을 두고 모니터링을 중지합니다.
+        QTimer::singleShot(200, this, &QtKohzuManager::stopMonitoring);
         QMetaObject::invokeMethod(this, "onControllerResponse", Qt::QueuedConnection,
                                   Q_ARG(int, axis_no),
                                   Q_ARG(bool, false),
@@ -66,8 +66,8 @@ void QtKohzuManager::moveOrigin(int axis_no, int speed)
     if (!kohzu_controller_) return;
 
     auto callback = [this, axis_no](const ProtocolResponse& resp) {
-        // 원점 복귀 완료 후 모니터링을 중지합니다.
-        this->stopMonitoring();
+        // 원점 복귀 완료 후 200ms 지연을 두고 모니터링을 중지합니다.
+        QTimer::singleShot(200, this, &QtKohzuManager::stopMonitoring);
         QMetaObject::invokeMethod(this, "onControllerResponse", Qt::QueuedConnection,
                                   Q_ARG(int, axis_no),
                                   Q_ARG(bool, true),
