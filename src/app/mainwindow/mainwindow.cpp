@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "PresetDialog.h"
 #include <vector>
 #include <QMessageBox>
 #include <cmath>
@@ -10,6 +11,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     manager_ = new QtKohzuManager(this);
+    presetManager_ = new PresetManager(this);
     motorDefinitions_ = getMotorDefinitions(); // 모터 정보 로드
 
     connect(manager_, &QtKohzuManager::logMessage, this, &MainWindow::logMessage);
@@ -31,12 +33,13 @@ void MainWindow::setupAxisWidget(AxisControlWidget* widget)
     connect(widget, &AxisControlWidget::originRequested, this, &MainWindow::handleOriginRequest);
     connect(widget, &AxisControlWidget::removalRequested, this, &MainWindow::handleRemovalRequest);
     connect(widget, &AxisControlWidget::motorSelectionChanged, this, &MainWindow::handleMotorSelectionChange);
+    connect(widget, &AxisControlWidget::importRequested, this, &MainWindow::handleImportRequest);
 }
 
 void MainWindow::on_connectButton_clicked()
 {
     if (ui->connectButton->text() == "Connect") {
-        manager_->connectToController(ui->ipAddressEdit->text(), ui->portEdit->text().toUShort());
+        manager_->connectToController(ui->hostLineEdit->text(), ui->portLineEdit->text().toUShort());
     } else {
         manager_->disconnectFromController();
     }
@@ -104,6 +107,8 @@ void MainWindow::handleMoveRequest(int axis, bool is_ccw)
     AxisControlWidget* widget = axisWidgets_.value(axis, nullptr);
     if (!widget) return;
 
+    savePreset(axis); // Save current settings before moving
+
     QString motorName = widget->getSelectedMotorName();
     const StageMotorInfo& motor = motorDefinitions_[motorName];
 
@@ -148,6 +153,8 @@ void MainWindow::handleOriginRequest(int axis)
     AxisControlWidget* widget = axisWidgets_.value(axis, nullptr);
     if (!widget) return;
 
+    savePreset(axis); // Also save settings on origin move
+
     int speed = widget->getSelectedSpeed();
     QMessageBox::StandardButton reply;
     reply = QMessageBox::question(this, "Confirm Origin Return",
@@ -156,6 +163,32 @@ void MainWindow::handleOriginRequest(int axis)
     if (reply == QMessageBox::Yes) {
         manager_->moveOrigin(axis, speed);
     }
+}
+
+void MainWindow::handleImportRequest(int axis)
+{
+    PresetDialog dialog(axis, presetManager_, this);
+    connect(&dialog, &PresetDialog::presetApplied, this, [this, axis](const AxisPreset& preset){
+        if (axisWidgets_.contains(axis)) {
+            axisWidgets_[axis]->applyPreset(preset);
+        }
+    });
+    dialog.exec();
+}
+
+void MainWindow::savePreset(int axis)
+{
+    AxisControlWidget* widget = axisWidgets_.value(axis, nullptr);
+    if(!widget) return;
+
+    AxisPreset preset;
+    preset.id = QUuid::createUuid();
+    preset.motorName = widget->getSelectedMotorName();
+    preset.isAbsolute = widget->isAbsoluteMode();
+    preset.value = widget->getInputValue();
+    preset.speed = widget->getSelectedSpeed();
+
+    presetManager_->addPreset(axis, preset);
 }
 
 void MainWindow::handleMotorSelectionChange(int axis, const QString &motorName)

@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QMap>
 #include "StageMotorInfo.h"
+#include "PresetManager.h"
 
 namespace Ui {
 class AxisControlWidget;
@@ -28,18 +29,21 @@ public:
     void setAxisNumber(int axisNumber);
     void populateMotorDropdown(const QMap<QString, StageMotorInfo>& motors);
     void setPosition(double physical_position);
+    void applyPreset(const AxisPreset& preset);
 
 signals:
     void moveRequested(int axis, bool is_ccw);
     void originRequested(int axis);
     void removalRequested(int axis);
     void motorSelectionChanged(int axis, const QString& motorName);
+    void importRequested(int axis);
 
 private slots:
     void on_removeButton_clicked();
     void on_cwButton_clicked();
     void on_ccwButton_clicked();
     void on_originButton_clicked();
+    void on_importButton_clicked();
     void on_motorComboBox_currentIndexChanged(int index);
 
 private:

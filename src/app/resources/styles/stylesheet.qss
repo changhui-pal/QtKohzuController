@@ -1,0 +1,90 @@
+/* General Window Styling */
+QMainWindow, QDialog {
+    background-color: #2c3e50;
+    color: #ecf0f1;
+}
+
+/* GroupBox Styling */
+QGroupBox {
+    background-color: #34495e;
+    border: 1px solid #4a627a;
+    border-radius: 5px;
+    margin-top: 1ex; /* leave space at the top for the title */
+    font-size: 14px;
+    font-weight: bold;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top center;
+    padding: 0 3px;
+    background-color: #4a627a;
+    border-radius: 3px;
+    color: #ffffff;
+}
+
+/* Label Styling */
+QLabel {
+    font-size: 14px;
+    color: #bdc3c7;
+}
+
+/* Button Styling */
+QPushButton {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+QPushButton:hover {
+    background-color: #2980b9;
+}
+
+QPushButton:pressed {
+    background-color: #1f618d;
+}
+
+/* LineEdit and SpinBox Styling */
+QLineEdit, QSpinBox, QComboBox {
+    background-color: #2c3e50;
+    border: 1px solid #4a627a;
+    border-radius: 4px;
+    padding: 5px;
+    color: #ecf0f1;
+    font-size: 14px;
+}
+
+QComboBox::drop-down {
+    border: none;
+}
+
+/* ScrollArea and ScrollBar Styling */
+QScrollArea {
+    border: none;
+}
+
+QScrollBar:vertical {
+    border: 1px solid #2c3e50;
+    background: #34495e;
+    width: 15px;
+    margin: 15px 0 15px 0;
+    border-radius: 2px;
+}
+
+/* TextEdit for Logs */
+QTextEdit {
+    background-color: #1a252f;
+    color: #bdc3c7;
+    border: 1px solid #4a627a;
+    border-radius: 4px;
+    font-family: "Courier New", Courier, monospace;
+}
+
+/* Splitter Styling */
+QSplitter::handle:vertical {
+    height: 10px;
+    background-color: #4a627a;
+}

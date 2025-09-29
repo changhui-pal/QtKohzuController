@@ -10,15 +10,22 @@ file(GLOB_RECURSE APP_SRCS
 file(GLOB APP_UIS
     "${CMAKE_CURRENT_SOURCE_DIR}/mainwindow/*.ui"
     "${CMAKE_CURRENT_SOURCE_DIR}/axiscontrollwidget/*.ui"
+    "${CMAKE_CURRENT_SOURCE_DIR}/presetdialog/*.ui"
 )
 
-target_sources(QtKohzuController PRIVATE ${APP_SRCS} ${APP_UIS})
+# 리소스 파일 추가
+set(APP_RESOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/resources/app.qrc"
+)
+
+target_sources(QtKohzuController PRIVATE ${APP_SRCS} ${APP_UIS} ${APP_RESOURCES})
 
 # 헤더 파일 경로 지정
 target_include_directories(QtKohzuController PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/mainwindow
     ${CMAKE_CURRENT_SOURCE_DIR}/axiscontrollwidget
+    ${CMAKE_CURRENT_SOURCE_DIR}/presetdialog
 )
 
 # 라이브러리 연결

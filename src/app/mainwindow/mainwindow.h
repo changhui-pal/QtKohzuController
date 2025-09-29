@@ -6,6 +6,7 @@
 #include "QtKohzuManager.h"
 #include "AxisControlWidget.h"
 #include "StageMotorInfo.h"
+#include "PresetManager.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -31,13 +32,16 @@ private slots:
     void handleOriginRequest(int axis);
     void handleRemovalRequest(int axis);
     void handleMotorSelectionChange(int axis, const QString& motorName);
+    void handleImportRequest(int axis);
 
 private:
     void restartMonitoring();
     void setupAxisWidget(AxisControlWidget* widget);
+    void savePreset(int axis);
 
     Ui::MainWindow *ui;
     QtKohzuManager *manager_;
+    PresetManager *presetManager_;
 
     QMap<int, AxisControlWidget*> axisWidgets_;
     QMap<QString, StageMotorInfo> motorDefinitions_;

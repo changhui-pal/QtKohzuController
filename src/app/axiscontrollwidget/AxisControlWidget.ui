@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1038</width>
-    <height>85</height>
+    <width>958</width>
+    <height>95</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -33,10 +33,10 @@
       <item>
        <spacer name="horizontalSpacer_4">
         <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
+         <enum>Qt::Horizontal</enum>
         </property>
         <property name="sizeType">
-         <enum>QSizePolicy::Policy::Fixed</enum>
+         <enum>QSizePolicy::Fixed</enum>
         </property>
         <property name="sizeHint" stdset="0">
          <size>
@@ -57,7 +57,7 @@
        <widget class="QLabel" name="currentPositionLabel">
         <property name="minimumSize">
          <size>
-          <width>100</width>
+          <width>120</width>
           <height>0</height>
          </size>
         </property>
@@ -65,21 +65,21 @@
          <string>0.0000</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>
       <item>
        <spacer name="horizontalSpacer_3">
         <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
+         <enum>Qt::Horizontal</enum>
         </property>
         <property name="sizeType">
-         <enum>QSizePolicy::Policy::Fixed</enum>
+         <enum>QSizePolicy::Expanding</enum>
         </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>20</width>
+          <width>40</width>
           <height>20</height>
          </size>
         </property>
@@ -101,6 +101,12 @@
       </item>
       <item>
        <widget class="QLineEdit" name="valueLineEdit">
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>0</height>
+         </size>
+        </property>
         <property name="placeholderText">
          <string>...</string>
         </property>
@@ -109,7 +115,7 @@
       <item>
        <widget class="QLabel" name="rangeLabel">
         <property name="text">
-         <string>(0 ...)</string>
+         <string>(± 0 ...)</string>
         </property>
        </widget>
       </item>
@@ -124,9 +130,16 @@
        <widget class="QComboBox" name="speedComboBox"/>
       </item>
       <item>
+       <widget class="QPushButton" name="importButton">
+        <property name="text">
+         <string>Import</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="ccwButton">
         <property name="text">
-         <string>◀(ccw(-))</string>
+         <string>◀</string>
         </property>
        </widget>
       </item>
@@ -140,7 +153,7 @@
       <item>
        <widget class="QPushButton" name="cwButton">
         <property name="text">
-         <string>(cw(+))▶</string>
+         <string>▶</string>
         </property>
        </widget>
       </item>
@@ -159,3 +172,4 @@
  <resources/>
  <connections/>
 </ui>
+
