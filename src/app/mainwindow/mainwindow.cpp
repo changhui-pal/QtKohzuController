@@ -65,7 +65,7 @@ void MainWindow::on_addAxisButton_clicked()
     setupAxisWidget(axisWidget);
     ui->axisLayout->addWidget(axisWidget);
 
-    // Add axis to polling and background monitoring
+    // Add axis to UI polling list only
     manager_->addAxisToPoll(axisToAdd);
     manager_->setSystem(axisToAdd, 2, 8);
 }
@@ -73,7 +73,7 @@ void MainWindow::on_addAxisButton_clicked()
 void MainWindow::handleRemovalRequest(int axis)
 {
     if (axisWidgets_.contains(axis)) {
-        // Remove from polling and background monitoring
+        // Remove from UI polling list only
         manager_->removeAxisToPoll(axis);
 
         AxisControlWidget *widget = axisWidgets_.take(axis);

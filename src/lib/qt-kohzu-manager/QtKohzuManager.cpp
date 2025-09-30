@@ -81,6 +81,10 @@ void QtKohzuManager::cleanup()
 void QtKohzuManager::move(int axisNo, int pulse, int speed, bool isAbsolute)
 {
     if (!kohzuController_) return;
+
+    // 이동 시작 전 모니터링 추가
+    kohzuController_->addAxisToMonitor(axisNo);
+
     auto callback = [this, axisNo](const ProtocolResponse& resp) {
         QMetaObject::invokeMethod(this, "onControllerResponse", Qt::QueuedConnection,
                                   Q_ARG(int, axisNo), Q_ARG(bool, false),
@@ -96,6 +100,10 @@ void QtKohzuManager::move(int axisNo, int pulse, int speed, bool isAbsolute)
 void QtKohzuManager::moveOrigin(int axisNo, int speed)
 {
     if (!kohzuController_) return;
+
+    // 원점 복귀 시작 전 모니터링 추가
+    kohzuController_->addAxisToMonitor(axisNo);
+
     auto callback = [this, axisNo](const ProtocolResponse& resp) {
         QMetaObject::invokeMethod(this, "onControllerResponse", Qt::QueuedConnection,
                                   Q_ARG(int, axisNo), Q_ARG(bool, true),
@@ -114,21 +122,16 @@ void QtKohzuManager::addAxisToPoll(int axisNo)
 {
     if (!axesToPoll_.contains(axisNo)) {
         axesToPoll_.append(axisNo);
-        kohzuController_->addAxisToMonitor(axisNo); // Start background data fetching
     }
 }
 
 void QtKohzuManager::removeAxisToPoll(int axisNo)
 {
     axesToPoll_.removeAll(axisNo);
-    kohzuController_->removeAxisToMonitor(axisNo); // Stop background data fetching
 }
 
 void QtKohzuManager::clearPollAxes()
 {
-    for(int axisNo : axesToPoll_){
-        kohzuController_->removeAxisToMonitor(axisNo);
-    }
     axesToPoll_.clear();
 }
 
@@ -144,6 +147,13 @@ void QtKohzuManager::pollPositions()
 
 void QtKohzuManager::onControllerResponse(int axisNo, bool isOriginCommand, const std::string& fullResponse, char status)
 {
+    // 이동 완료 후 1초 뒤에 모니터링 중지
+    QTimer::singleShot(1000, this, [this, axisNo](){
+        if(kohzuController_){
+            kohzuController_->removeAxisToMonitor(axisNo);
+        }
+    });
+
     QString commandType = isOriginCommand ? "Origin" : "Move";
     QString message = QString("Axis %1 %2 command %3. Response: %4")
                           .arg(axisNo)
