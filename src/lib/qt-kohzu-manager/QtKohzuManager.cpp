@@ -31,15 +31,20 @@ void QtKohzuManager::connectToController(const QString &host, quint16 port)
 
         ioThread_ = std::make_unique<std::thread>([this]() {
             try {
-                if(ioContext_) ioContext_->run();
+                if(ioContext_) {
+                    // Prevent io_context::run() from returning immediately if there's no work.
+                    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_guard(ioContext_->get_executor());
+                    ioContext_->run();
+                }
             } catch (const std::exception& e) {
                 spdlog::error("io_context exception: {}", e.what());
             }
         });
 
         kohzuController_->start();
-        kohzuController_->startMonitoring({}, 100); // Start background data fetch thread
-        pollTimer_->start(100); // Start UI update poll timer
+        // startMonitoring now only takes the period
+        kohzuController_->startMonitoring(100);
+        pollTimer_->start(100);
 
         emit connectionStatusChanged(true);
         emit logMessage(QString("Successfully connected to %1:%2").arg(host).arg(port));
@@ -60,29 +65,36 @@ void QtKohzuManager::disconnectFromController()
 void QtKohzuManager::cleanup()
 {
     pollTimer_->stop();
-    clearPollAxes();
+
     if (kohzuController_) {
+        // Stop the monitoring thread first
         kohzuController_->stopMonitoring();
     }
     if (ioContext_) {
+        // Signal the io_context to stop, allowing run() to exit
         ioContext_->stop();
     }
     if (ioThread_ && ioThread_->joinable()) {
-        ioThread_->detach();
+        // Wait for the thread to finish gracefully
+        ioThread_->join();
     }
+
+    // Reset all resources
     ioThread_.reset();
     kohzuController_.reset();
     axisState_.reset();
     protocolHandler_.reset();
     client_.reset();
     ioContext_.reset();
+
+    // Clear the polling list after everything is cleaned up
+    clearPollAxes();
 }
 
 void QtKohzuManager::move(int axisNo, int pulse, int speed, bool isAbsolute)
 {
     if (!kohzuController_) return;
 
-    // 이동 시작 전 모니터링 추가
     kohzuController_->addAxisToMonitor(axisNo);
 
     auto callback = [this, axisNo](const ProtocolResponse& resp) {
@@ -101,7 +113,6 @@ void QtKohzuManager::moveOrigin(int axisNo, int speed)
 {
     if (!kohzuController_) return;
 
-    // 원점 복귀 시작 전 모니터링 추가
     kohzuController_->addAxisToMonitor(axisNo);
 
     auto callback = [this, axisNo](const ProtocolResponse& resp) {
@@ -147,7 +158,6 @@ void QtKohzuManager::pollPositions()
 
 void QtKohzuManager::onControllerResponse(int axisNo, bool isOriginCommand, const std::string& fullResponse, char status)
 {
-    // 이동 완료 후 1초 뒤에 모니터링 중지
     QTimer::singleShot(1000, this, [this, axisNo](){
         if(kohzuController_){
             kohzuController_->removeAxisToMonitor(axisNo);
