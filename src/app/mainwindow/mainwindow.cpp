@@ -1,7 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "PresetDialog.h"
-#include <vector>
 #include <QMessageBox>
 #include <cmath>
 
@@ -39,7 +38,6 @@ void MainWindow::on_connectButton_clicked()
 
 void MainWindow::updateConnectionStatus(bool connected)
 {
-    // 그룹 전체 대신 개별 위젯을 제어하여 Disconnect 버튼을 항상 활성화합니다.
     ui->hostLineEdit->setEnabled(!connected);
     ui->portLineEdit->setEnabled(!connected);
     ui->controlGroup->setEnabled(connected);
@@ -48,53 +46,10 @@ void MainWindow::updateConnectionStatus(bool connected)
         ui->connectButton->setText("Disconnect");
     } else {
         ui->connectButton->setText("Connect");
-        if(manager_) manager_->stopMonitoring();
+        if(manager_) manager_->clearPollAxes();
     }
 }
 
-void MainWindow::handleMoveRequest(int axis, bool is_ccw)
-{
-    AxisControlWidget* widget = axisWidgets_.value(axis, nullptr);
-    if (!widget) return;
-    savePreset(axis);
-
-    QString motorName = widget->getSelectedMotorName();
-    const StageMotorInfo& motor = motorDefinitions_[motorName];
-    double value_physical = widget->getInputValue();
-    if (is_ccw) { value_physical = -qAbs(value_physical); } else { value_physical = qAbs(value_physical); }
-    bool isAbsolute = widget->isAbsoluteMode();
-    int speed = widget->getSelectedSpeed();
-
-    double target_pos_physical = 0.0;
-    if (isAbsolute) {
-        target_pos_physical = value_physical;
-    } else {
-        double current_pos_physical = static_cast<double>(currentPositions_pulse_.value(axis, 0)) * motor.value_per_pulse;
-        target_pos_physical = current_pos_physical + value_physical;
-    }
-
-    // 가동 범위를 0 ~ (range * 2)로 검사합니다.
-    double max_range = motor.travel_range * 2.0;
-    if (target_pos_physical < (0.0 - 1e-9) || target_pos_physical > (max_range + 1e-9)) {
-        QMessageBox::critical(this, "Out of Range",
-                              QString("Target position %1 %2 is out of range (0 ~ %3 %2).")
-                                  .arg(target_pos_physical, 0, 'f', motor.display_precision)
-                                  .arg(motor.unit_symbol)
-                                  .arg(max_range, 0, 'f', motor.display_precision));
-        return;
-    }
-
-    if (motor.value_per_pulse == 0) return;
-
-    int move_pulse = 0;
-    if (isAbsolute) { move_pulse = std::round(target_pos_physical / motor.value_per_pulse); } else { move_pulse = std::round(value_physical / motor.value_per_pulse); }
-
-    manager_->startMonitoring({axis});
-    manager_->move(axis, move_pulse, speed, isAbsolute);
-}
-
-
-// ... (Other functions are unchanged)
 void MainWindow::on_addAxisButton_clicked()
 {
     int axisToAdd = ui->addAxisSpinBox->value();
@@ -106,12 +61,64 @@ void MainWindow::on_addAxisButton_clicked()
     AxisControlWidget *axisWidget = new AxisControlWidget(this);
     axisWidget->setAxisNumber(axisToAdd);
     axisWidgets_.insert(axisToAdd, axisWidget);
-    currentPositions_pulse_[axisToAdd] = 0;
+    currentPositionsPulse_.insert(axisToAdd, 0);
     setupAxisWidget(axisWidget);
     ui->axisLayout->addWidget(axisWidget);
 
-    // 축 생성 시 원점 복귀 타입 설정 (ccw limit을 원점)
+    // Add axis to polling and background monitoring
+    manager_->addAxisToPoll(axisToAdd);
     manager_->setSystem(axisToAdd, 2, 8);
+}
+
+void MainWindow::handleRemovalRequest(int axis)
+{
+    if (axisWidgets_.contains(axis)) {
+        // Remove from polling and background monitoring
+        manager_->removeAxisToPoll(axis);
+
+        AxisControlWidget *widget = axisWidgets_.take(axis);
+        currentPositionsPulse_.remove(axis);
+        widget->deleteLater();
+    }
+}
+
+void MainWindow::handleMoveRequest(int axis, bool isCcw)
+{
+    AxisControlWidget* widget = axisWidgets_.value(axis, nullptr);
+    if (!widget) return;
+    savePreset(axis);
+
+    QString motorName = widget->getSelectedMotorName();
+    const StageMotorInfo& motor = motorDefinitions_[motorName];
+    double valuePhysical = widget->getInputValue();
+    if (isCcw) { valuePhysical = -qAbs(valuePhysical); } else { valuePhysical = qAbs(valuePhysical); }
+    bool isAbsolute = widget->isAbsoluteMode();
+    int speed = widget->getSelectedSpeed();
+
+    double targetPosPhysical = 0.0;
+    if (isAbsolute) {
+        targetPosPhysical = valuePhysical;
+    } else {
+        double currentPosPhysical = static_cast<double>(currentPositionsPulse_.value(axis, 0)) * motor.value_per_pulse;
+        targetPosPhysical = currentPosPhysical + valuePhysical;
+    }
+
+    double maxRange = motor.travel_range * 2.0;
+    if (targetPosPhysical < (0.0 - 1e-9) || targetPosPhysical > (maxRange + 1e-9)) {
+        QMessageBox::critical(this, "Out of Range",
+                              QString("Target position %1 %2 is out of range (0 ~ %3 %2).")
+                                  .arg(targetPosPhysical, 0, 'f', motor.display_precision)
+                                  .arg(motor.unit_symbol)
+                                  .arg(maxRange, 0, 'f', motor.display_precision));
+        return;
+    }
+
+    if (motor.value_per_pulse == 0) return;
+
+    int movePulse = 0;
+    if (isAbsolute) { movePulse = std::round(targetPosPhysical / motor.value_per_pulse); } else { movePulse = std::round(valuePhysical / motor.value_per_pulse); }
+
+    manager_->move(axis, movePulse, speed, isAbsolute);
 }
 
 void MainWindow::handleOriginRequest(int axis)
@@ -126,22 +133,11 @@ void MainWindow::handleOriginRequest(int axis)
                                                               QMessageBox::Yes|QMessageBox::No);
 
     if (reply == QMessageBox::Yes) {
-        // 원점 복귀 직전에 모니터링 시작
-        manager_->startMonitoring({axis});
         manager_->moveOrigin(axis, speed);
     }
 }
 
-void MainWindow::handleRemovalRequest(int axis)
-{
-    if (axisWidgets_.contains(axis)) {
-        AxisControlWidget *widget = axisWidgets_.take(axis);
-        currentPositions_pulse_.remove(axis);
-        widget->deleteLater();
-        // 축 제거 시에는 모니터링을 재시작할 필요 없음
-    }
-}
-
+// ... (Other functions like setupAxisWidget, handleImportRequest, etc. are unchanged)
 void MainWindow::setupAxisWidget(AxisControlWidget* widget)
 {
     widget->populateMotorDropdown(motorDefinitions_);
@@ -176,23 +172,23 @@ void MainWindow::savePreset(int axis)
     presetManager_->addPreset(axis, preset);
 }
 
-void MainWindow::updatePosition(int axis, int position_pulse)
+void MainWindow::updatePosition(int axis, int positionPulse)
 {
-    currentPositions_pulse_[axis] = position_pulse;
+    currentPositionsPulse_[axis] = positionPulse;
     AxisControlWidget* widget = axisWidgets_.value(axis, nullptr);
     if (widget) {
         QString motorName = widget->getSelectedMotorName();
         if (motorDefinitions_.contains(motorName)) {
             const StageMotorInfo& motor = motorDefinitions_[motorName];
-            double position_physical = static_cast<double>(position_pulse) * motor.value_per_pulse;
-            widget->setPosition(position_physical);
+            double positionPhysical = static_cast<double>(positionPulse) * motor.value_per_pulse;
+            widget->setPosition(positionPhysical);
         }
     }
 }
 
 void MainWindow::handleMotorSelectionChange(int axis, const QString &motorName)
 {
-    updatePosition(axis, currentPositions_pulse_.value(axis, 0));
+    updatePosition(axis, currentPositionsPulse_.value(axis, 0));
 }
 
 void MainWindow::logMessage(const QString &message)

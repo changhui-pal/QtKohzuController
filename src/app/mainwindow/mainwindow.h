@@ -45,7 +45,7 @@ private:
 
     QMap<int, AxisControlWidget*> axisWidgets_;
     QMap<QString, StageMotorInfo> motorDefinitions_;
-    QMap<int, int> currentPositions_pulse_;
+    QMap<int, int> currentPositionsPulse_;
 };
 #endif // MAINWINDOW_H
 
