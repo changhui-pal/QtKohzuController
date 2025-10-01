@@ -126,7 +126,14 @@ void QtKohzuManager::moveOrigin(int axisNo, int speed)
 void QtKohzuManager::setSystem(int axisNo, int systemNo, int value)
 {
     if (!kohzuController_) return;
-    kohzuController_->setSystem(axisNo, systemNo, value, nullptr);
+
+    auto callback = [this, axisNo](const ProtocolResponse& resp) {
+        QMetaObject::invokeMethod(this, "onControllerResponse", Qt::QueuedConnection,
+                                  Q_ARG(int, axisNo), Q_ARG(bool, false),
+                                  Q_ARG(std::string, resp.fullResponse), Q_ARG(char, resp.status));
+    };
+
+    kohzuController_->setSystem(axisNo, systemNo, value, callback);
 }
 
 void QtKohzuManager::addAxisToPoll(int axisNo)
