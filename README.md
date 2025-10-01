@@ -101,6 +101,7 @@ qtkohzucontroller/
     │   ├── presetdialog/PresetDialog.{h,cpp,ui}
     │   └── resources/app.qrc, styles/stylesheet.qss
     └── lib/
+        ├── kohzu-controller/
         └── qt-kohzu-manager/
             ├── CMakeLists.txt
             ├── PresetManager.{h,cpp}
