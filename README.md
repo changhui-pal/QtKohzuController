@@ -14,6 +14,36 @@
 - **로그**: 명령 결과와 오류를 실시간 로그로 표시.
 - **UI**: 다크 테마, 유효성 검사(범위, 원점 복귀 확인).
 
+### 워크플로우
+```mermaid
+flowchart TD
+    A[MainWindow 초기화] --> B[Connect 클릭]
+    B --> C{연결 상태?}
+    C -->|연결| D[호스트/포트 입력 → QtKohzuManager::connect]
+    D --> E[ioContext 실행 → KohzuController 시작]
+    E --> F[connectionStatusChanged → UI 활성화]
+    C -->|해제| G[QtKohzuManager::disconnect]
+
+    F --> H[Add Axis 클릭]
+    H --> I[AxisControlWidget 추가 → addAxisToPoll]
+    I --> J[모터 선택 → updatePosition]
+
+    J --> K[Move 클릭 → handleMoveRequest]
+    K --> L[물리 값 → 펄스 변환]
+    L -->|유효| M[QtKohzuManager::move]
+    M --> N[logMessage & positionUpdated]
+
+    J --> O[Origin 클릭 → handleOriginRequest]
+    O --> P[확인 다이얼로그 → moveOrigin]
+
+    J --> Q[Import 클릭 → PresetDialog]
+    Q --> R[loadPresets → 목록 표시]
+    R --> S[Apply/Delete → presetApplied / savePresets]
+
+    N --> T[pollPositions → UI 업데이트]
+    T --> U[실시간 로그 & 위치 표시]
+```
+
 ---
 
 ## 의존성
@@ -201,6 +231,116 @@ void QtKohzuManager::pollPositions() {
 ---
 
 ## 아키텍처
+```mermaid
+classDiagram
+    direction TB
+
+    class QtKohzuManager {
+        <<QObject>>
+        -ioContext_: unique_ptr<io_context>
+        -ioThread_: unique_ptr<thread>
+        -client_: shared_ptr<ICommunicationClient>
+        -protocolHandler_: shared_ptr<ProtocolHandler>
+        -axisState_: shared_ptr<AxisState>
+        -kohzuController_: shared_ptr<KohzuController>
+        -pollTimer_: QTimer*
+        -axesToPoll_: QList<int>
+        +connectToController(host: QString, port: quint16) void
+        +disconnectFromController() void
+        +move(axisNo: int, pulse: int, speed: int, isAbsolute: bool) void
+        +moveOrigin(axisNo: int, speed: int) void
+        +setSystem(axisNo: int, systemNo: int, value: int) void
+        +addAxisToPoll(axisNo: int) void
+        +removeAxisToPoll(axisNo: int) void
+        +pollPositions() void
+        %% Signals
+        +connectionStatusChanged(connected: bool) signal
+        +logMessage(message: QString) signal
+        +positionUpdated(axisNo: int, positionPulse: int) signal
+    }
+
+    class PresetManager {
+        <<QObject>>
+        +loadPresets(axisNumber: int) QList<AxisPreset>
+        +savePresets(axisNumber: int, presets: QList<AxisPreset>) void
+        +addPreset(axisNumber: int, preset: AxisPreset) void
+    }
+
+    class StageMotorInfo {
+        <<struct>>
+        +name: QString
+        +unit_type: UnitType
+        +unit_symbol: QString
+        +value_per_pulse: double
+        +travel_range: double
+        +display_precision: int
+    }
+
+    class AxisPreset {
+        <<struct>>
+        +id: QUuid
+        +motorName: QString
+        +isAbsolute: bool
+        +value: double
+        +speed: int
+    }
+
+    class MainWindow {
+        <<QMainWindow>>
+        -ui: Ui::MainWindow*
+        -manager_: QtKohzuManager*
+        -presetManager_: PresetManager*
+        -motorDefinitions_: QMap<QString, StageMotorInfo>
+        -axisWidgets_: QMap<int, AxisControlWidget*>
+        -currentPositionsPulse_: QMap<int, int>
+        +on_connectButton_clicked() void
+        +on_addAxisButton_clicked() void
+        +handleMoveRequest(axis: int, isCcw: bool) void
+        +handleOriginRequest(axis: int) void
+        +updatePosition(axis: int, position_pulse: int) void
+    }
+
+    class AxisControlWidget {
+        <<QWidget>>
+        -ui: Ui::AxisControlWidget*
+        -currentAxisNumber_: int
+        -displayPrecision_: int
+        -motorDefinitions_: QMap<QString, StageMotorInfo>
+        +getAxisNumber() int
+        +getSelectedMotorName() QString
+        +getInputValue() double
+        +isAbsoluteMode() bool
+        +setPosition(physical_position: double) void
+        +applyPreset(preset: AxisPreset) void
+        %% Signals
+        +moveRequested(axis: int, is_ccw: bool) signal
+        +originRequested(axis: int) signal
+        +removalRequested(axis: int) signal
+        +motorSelectionChanged(axis: int, motorName: QString) signal
+    }
+
+    class PresetDialog {
+        <<QDialog>>
+        -ui: Ui::PresetDialog*
+        -axisNumber_: int
+        -presetManager_: PresetManager*
+        -currentPresets_: QList<AxisPreset>
+        +populateList() void
+        +onApplyClicked() void
+        +onDeleteClicked() void
+        +presetApplied(preset: AxisPreset) signal
+    }
+
+    %% 관계 정의
+    QtKohzuManager o--> KohzuController : wraps
+    MainWindow o--> QtKohzuManager : uses
+    MainWindow o--> PresetManager : uses
+    MainWindow o--> AxisControlWidget : contains
+    AxisControlWidget --> StageMotorInfo : uses map
+    PresetDialog o--> PresetManager : uses
+    PresetManager --> AxisPreset : manages
+    PresetDialog --> AxisPreset : lists
+```
 - **QtKohzuManager**: `kohzu-controller`를 래핑, Qt 신호/슬롯으로 UI와 통신.
 - **MainWindow**: 연결, 축 추가, 위치 업데이트 관리.
 - **AxisControlWidget**: 축별 UI, 모터 선택 및 입력 처리.
