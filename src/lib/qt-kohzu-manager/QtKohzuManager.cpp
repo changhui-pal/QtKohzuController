@@ -43,7 +43,7 @@ void QtKohzuManager::connectToController(const QString &host, quint16 port)
 
         kohzuController_->start();
         // startMonitoring now only takes the period
-        kohzuController_->startMonitoring(100);
+        kohzuController_->startMonitoring({}, 100);
         pollTimer_->start(100);
 
         emit connectionStatusChanged(true);
