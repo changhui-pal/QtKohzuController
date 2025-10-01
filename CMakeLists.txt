@@ -7,7 +7,13 @@ set(CMAKE_TOOLCHAIN_FILE "C:/dev/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE S
 
 # 모든 하위 프로젝트에서 사용할 공통 패키지를 여기서 찾습니다.
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets)
-find_package(Boost REQUIRED COMPONENTS asio)
+
+if(WIN32)
+    find_package(Boost REQUIRED COMPONENTS asio)
+else()
+    find_package(Boost REQUIRED)
+endif()
+
 find_package(spdlog REQUIRED)
 
 # Qt 빌드 도구 활성화 (전역 설정)
