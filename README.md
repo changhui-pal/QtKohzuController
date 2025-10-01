@@ -220,4 +220,3 @@ void QtKohzuManager::pollPositions() {
 ---
 
 ## 라이선스
-MIT
