@@ -54,7 +54,7 @@ flowchart TD
 
 ---
 
-## 빌드 방법
+## 빌드 방법 (window 기준 (수정 필요))
 1. VCPKG 툴체인 설정:
    ```bash
    export VCPKG_ROOT=/path/to/vcpkg
@@ -75,6 +75,7 @@ flowchart TD
    ```bash
    ./build/src/app/QtKohzuController
    ```
+   qt creator를 사용해 빌드 함. (의존성 패키지 설치 후 Boost에서 오류가 난다면 kohzu-controller/CMakeLists.txt의 Boost::asio를 ${Boost_LIBRARIES}로 변경
 
 ---
 
